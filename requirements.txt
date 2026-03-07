@@ -1,0 +1,5 @@
+# ISIC-Archive-CLI
+isic-cli>=6.0.0
+
+# Pandas
+pandas>=2.1.0
