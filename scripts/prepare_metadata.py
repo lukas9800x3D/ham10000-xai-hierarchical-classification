@@ -1,7 +1,9 @@
 """
+Reads data/raw/metadata.csv and adds hierarchical mappings:
+- Stage 1: benign/malignant
+- Stage 2: HAM10000 7-class labels
 
-Reads data/raw/metadata.csv, adds Stage 1 (benign/malignant, Stage 2 (lesion family), and Stage 3 
-(HAM10000 7-class label) columns, and saves the result to data/prepared/metadata.csv.
+The result is written to data/prepared/metadata.csv.
 
 """
 
@@ -13,8 +15,8 @@ RAW_METADATA = PROJECT_ROOT / "data" / "raw" / "metadata.csv"
 PREPARED_DIR = PROJECT_ROOT / "data" / "prepared"
 PREPARED_METADATA = PREPARED_DIR / "metadata.csv"
 
-# Mapping: diagnosis_3 to HAM10000 class label (Stage 3)
-DIAGNOSIS_3_TO_DX = {
+# Mapping: diagnosis_3 to HAM10000 7-class Stage 2
+DIAGNOSIS_3_TO_STAGE_2 = {
     "Nevus": "nv",
     "Melanoma, NOS": "mel",
     "Basal cell carcinoma": "bcc",
@@ -24,26 +26,21 @@ DIAGNOSIS_3_TO_DX = {
     "Squamous cell carcinoma, NOS": "akiec",
 }
 
-# Mapping: diagnosis_2 to Stage 2 (intermediate)
-DIAGNOSIS_2_TO_STAGE_2 = {
-    "Benign melanocytic proliferations": "melanocytic",
-    "Malignant melanocytic proliferations (Melanoma)": "melanocytic",
-    "Benign epidermal proliferations": "epidermal",
-    "Malignant epidermal proliferations": "epidermal",
-    "Indeterminate epidermal proliferations": "epidermal",
-    "Malignant adnexal epithelial proliferations - Follicular": "epithelial",
-    "Benign soft tissue proliferations - Fibro-histiocytic": "soft_tissue",
-    "Benign soft tissue proliferations - Vascular": "vascular",
-}
 
 # Values that should be mapped to "vasc" (empty string, NaN, etc.)
 VASC_VALUES = {"", "NaN", "nan", "NA", "N/A", "None"}
 
-# Override diagnosis_1 based on diagnosis_2
-DIAGNOSIS_1_OVERRIDE = {
-    "Indeterminate epidermal proliferations": "Malignant",
-}
 
+# Mapping: Stage 2 to Stage 1 (benign/malignant)
+STAGE_2_TO_STAGE_1 = {
+    "nv": "benign",
+    "bkl": "benign",
+    "df": "benign",
+    "vasc": "benign",
+    "mel": "malignant",
+    "bcc": "malignant",
+    "akiec": "malignant",
+}
 
 def prepare_metadata():
     """Read raw metadata, apply diagnosis mapping, and write to data/prepared/."""
@@ -57,30 +54,27 @@ def prepare_metadata():
 
     with open(RAW_METADATA, "r", encoding="utf-8") as f_in:
         reader = csv.DictReader(f_in)
-        fieldnames = list(reader.fieldnames) + ["Stage 1", "Stage 2", "Stage 3"]
+        fieldnames = list(reader.fieldnames) + ["Stage 1", "Stage 2"]
 
         rows = []
         unmapped = set()
         for row in reader:
             diag3 = row.get("diagnosis_3", "").strip()
 
-            # Stage 3: HAM10000 7-class label
+            # Stage 2: HAM10000 7-class label
             if diag3 in VASC_VALUES:
-                row["Stage 3"] = "vasc"
-            elif diag3 in DIAGNOSIS_3_TO_DX:
-                row["Stage 3"] = DIAGNOSIS_3_TO_DX[diag3]
+                row["Stage 2"] = "vasc"
+            elif diag3 in DIAGNOSIS_3_TO_STAGE_2:
+                row["Stage 2"] = DIAGNOSIS_3_TO_STAGE_2[diag3]
             else:
                 unmapped.add(diag3)
-                row["Stage 3"] = ""
+                row["Stage 2"] = ""
 
-            # Stage 2: intermediate grouping based on diagnosis_2
+            # Stage 1: benign/malignant (prefer Stage 2 mapping)
             diag2 = row.get("diagnosis_2", "").strip()
-            row["Stage 2"] = DIAGNOSIS_2_TO_STAGE_2.get(diag2, "")
-
-            # Stage 1: diagnosis_1 with override based on diagnosis_2
             diag1 = row.get("diagnosis_1", "").strip()
-            if diag2 in DIAGNOSIS_1_OVERRIDE:
-                row["Stage 1"] = DIAGNOSIS_1_OVERRIDE[diag2].lower()
+            if row["Stage 2"] in STAGE_2_TO_STAGE_1:
+                row["Stage 1"] = STAGE_2_TO_STAGE_1[row["Stage 2"]]
             else:
                 row["Stage 1"] = diag1.lower()
 
@@ -96,14 +90,11 @@ def prepare_metadata():
     total = len(rows)
     s1_counts = {}
     s2_counts = {}
-    s3_counts = {}
     for row in rows:
         s1 = row["Stage 1"]
         s2 = row["Stage 2"]
-        s3 = row["Stage 3"]
         s1_counts[s1] = s1_counts.get(s1, 0) + 1
         s2_counts[s2] = s2_counts.get(s2, 0) + 1
-        s3_counts[s3] = s3_counts.get(s3, 0) + 1
 
     print(f"Prepared metadata saved to: {PREPARED_METADATA}")
     print(f"  Total rows: {total}\n")
@@ -117,11 +108,6 @@ def prepare_metadata():
         display = label if label else "<UNMAPPED>"
         print(f"    {display:>15s}: {s2_counts[label]:>5d}")
         
-    print(f"\n  Stage 3 distribution:")
-    for label in sorted(s3_counts.keys()):
-        display = label if label else "<UNMAPPED>"
-        print(f"    {display:>15s}: {s3_counts[label]:>5d}")
-
     if unmapped:
         print(f"\n{len(unmapped)} unmapped diagnosis_3 value(s):")
         for val in sorted(unmapped):
