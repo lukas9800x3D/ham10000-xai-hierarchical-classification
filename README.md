@@ -1,4 +1,4 @@
-# HAM10000 — Hierarchical Skin-Lesion Classificationon the HAM10000-Dataset with XAI
+# Hierarchical Skin-Lesion Classification on the HAM10000-Dataset with XAI
 
 ## Setup
 
@@ -19,4 +19,3 @@ pip install -r requirements.txt
 python scripts/download_dataset.py
 ```
 
-Downloads metadata and images from the [ISIC Archive](https://www.isic-archive.com/) (Collection ID: 212) into `data/raw/`.
