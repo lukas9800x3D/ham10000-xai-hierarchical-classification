@@ -1,6 +1,6 @@
 """
 
-Reads data/raw/metadata.csv, adds Stage 1 (Benign/Malignant) and Stage 3 
+Reads data/raw/metadata.csv, adds Stage 1 (benign/malignant, Stage 2 (lesion family), and Stage 3 
 (HAM10000 7-class label) columns, and saves the result to data/prepared/metadata.csv.
 
 """
@@ -80,9 +80,9 @@ def prepare_metadata():
             # Stage 1: diagnosis_1 with override based on diagnosis_2
             diag1 = row.get("diagnosis_1", "").strip()
             if diag2 in DIAGNOSIS_1_OVERRIDE:
-                row["Stage 1"] = DIAGNOSIS_1_OVERRIDE[diag2]
+                row["Stage 1"] = DIAGNOSIS_1_OVERRIDE[diag2].lower()
             else:
-                row["Stage 1"] = diag1
+                row["Stage 1"] = diag1.lower()
 
             rows.append(row)
 
