@@ -9,7 +9,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATASET_DIR = PROJECT_ROOT / "data" / "raw"
-COLLECTION_ID = "212" # HAM10000 collection ID
+COLLECTION_ID = "66" # HAM10000 (Challenge 3) collection ID
 
 
 def download_dataset():
