@@ -1,5 +1,6 @@
 # ISIC Archive ISIC-CLI
 isic-cli>=6.0.0
+kagglehub>=0.3.0
 
 # Pandas
 pandas>=2.1.0

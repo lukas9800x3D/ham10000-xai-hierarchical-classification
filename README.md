@@ -19,3 +19,8 @@ pip install -r requirements.txt
 python scripts/download_dataset.py
 ```
 
+## Download Masks
+
+```bash
+python scripts/download_masks.py
+```

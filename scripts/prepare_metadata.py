@@ -70,8 +70,7 @@ def prepare_metadata():
                 unmapped.add(diag3)
                 row["Stage 2"] = ""
 
-            # Stage 1: benign/malignant (prefer Stage 2 mapping)
-            diag2 = row.get("diagnosis_2", "").strip()
+            # Stage 1: benign/malignant
             diag1 = row.get("diagnosis_1", "").strip()
             if row["Stage 2"] in STAGE_2_TO_STAGE_1:
                 row["Stage 1"] = STAGE_2_TO_STAGE_1[row["Stage 2"]]

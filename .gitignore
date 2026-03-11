@@ -9,6 +9,7 @@ __pycache__/
 # Dataset
 data/raw
 data/prepared
+data/masks
 
 # Jupyter
 .ipynb_checkpoints/
